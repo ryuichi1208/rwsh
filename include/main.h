@@ -8,6 +8,8 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <unistd.h>
+#include <errno.h>
 #include <getopt.h>
 
 /* alias */
