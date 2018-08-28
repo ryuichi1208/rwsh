@@ -29,10 +29,15 @@ void parse_opt(int argc, char **argv) {
 int main (int argc, char **argv) {
 	char cmd[MAX_CMD_STRLEN] = {0};
 
-	parse_opt();
+	parse_opt(argc, argv);
 
-	if(signal_handler_control(1) != 0){
+	if(signal_handler_control(1) != 0)
     		perror("signal handler set failed");
+
+	if(debag_level)
+		fprintf(stdout, "debag mode ON\n");
+
+	while (get_line(cmd, MAX_CMD_STRLEN)) {
 	}
 
 	return 0;

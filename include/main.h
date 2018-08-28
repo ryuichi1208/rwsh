@@ -18,8 +18,9 @@ typedef unsigned int u_int;
 typedef unsigned long u_long;
 
 /* 定数　*/
-#define MAX_CMD_STRLEN 256
-#define MIN_CMD_STRLEN 3
+#define MAX_CMD_STRLEN 	256
+#define MIN_CMD_STRLEN 	3
+#define SHELL	"rwsh$ "
 
 /* 関数プロトタイプ */
 int 	signal_handler_control(int);
