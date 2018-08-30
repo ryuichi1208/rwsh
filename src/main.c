@@ -5,7 +5,7 @@ static u_int debag_level = 0;
 
 /* usage */
 void usage() {
-	fprintf(stderr, "rwsh -v level\n");
+	fprintf(stderr, "usage : rwsh -v level\n");
 	exit(1);
 }
 
@@ -26,11 +26,9 @@ void parse_opt(int argc, char **argv) {
 	}
 }
 
-void exec_cmd(char **argcmd) {
-	char **envp;
-
-	if (execve(argcmd[0], argcmd, envp) == -1)
-		perror("not cmd");
+/* コマンド実行関数 */
+void exec_cmd(char **argcmd, char *cmd) {
+	system(cmd);
 	exit(0);
 }
 
@@ -38,15 +36,17 @@ int main (int argc, char **argv){
 	char *cmd = NULL;
 	pid_t pid = 0;
 	int status;
-	char *argcmd[3] = {"/bin/ls", "-l", NULL};
 
+	/* オプション解析 */
 	parse_opt(argc, argv);
 
 	cmd = malloc(MAX_CMD_STRLEN);
 
+	/* シグナル関連処理 */
 	if(signal_handler_control(1) != 0)
     		perror("signal handler set failed");
 
+	/* デバッグレベル設定 */
 	if(debag_level)
 		fprintf(stdout, "debag mode ON\n");
 
@@ -56,7 +56,7 @@ int main (int argc, char **argv){
 		if (pid < 0) {
 			perror("fork failed");
 		} else if (pid == 0) {
-			exec_cmd(argcmd);
+			exec_cmd(argcmd, cmd);
 		} else {
 			wait(&status);
 		}
