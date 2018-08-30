@@ -27,7 +27,7 @@ void parse_opt(int argc, char **argv) {
 }
 
 /* コマンド実行関数 */
-void exec_cmd(char **argcmd, char *cmd) {
+void exec_cmd(char *cmd) {
 	system(cmd);
 	exit(0);
 }
@@ -56,7 +56,7 @@ int main (int argc, char **argv){
 		if (pid < 0) {
 			perror("fork failed");
 		} else if (pid == 0) {
-			exec_cmd(argcmd, cmd);
+			exec_cmd(cmd);
 		} else {
 			wait(&status);
 		}
