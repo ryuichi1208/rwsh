@@ -26,21 +26,12 @@ void parse_opt(int argc, char **argv) {
 	}
 }
 
-/* コマンド実行関数 */
-void exec_cmd(char *cmd) {
-	system(cmd);
-	exit(0);
-}
-
 int main (int argc, char **argv){
-	char *cmd = NULL;
-	pid_t pid = 0;
-	int status;
+	char *cmd  = NULL;
+	cmd = malloc(MAX_CMD_STRLEN);
 
 	/* オプション解析 */
 	parse_opt(argc, argv);
-
-	cmd = malloc(MAX_CMD_STRLEN);
 
 	/* シグナル関連処理 */
 	if(signal_handler_control(1) != 0)
@@ -50,15 +41,15 @@ int main (int argc, char **argv){
 	if(debag_level)
 		fprintf(stdout, "debag mode ON\n");
 
-
+	/* 入力を受け付けコマンドとして実行 */
 	while (get_line(cmd, MAX_CMD_STRLEN)) {
-		pid = fork();
-		if (pid < 0) {
-			perror("fork failed");
-		} else if (pid == 0) {
-			exec_cmd(cmd);
+		if (!strcmp(cmd, "exit\n")) {
+			fprintf(stdout , "logout...\n");
+			exit(0);
+		} else if (!strcmp(cmd, "debag\n")) {
+			fprintf(stdout, "debag");
 		} else {
-			wait(&status);
+			system(cmd);
 		}
 	}
 
