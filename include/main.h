@@ -25,6 +25,7 @@ typedef unsigned long u_long;
 /* 関数プロトタイプ */
 int 	signal_handler_control(int);
 void 	sig_handler(int);
+char*	get_line(char*, int, char*);
 
 typedef enum _job_mode {
 	FOREGROUND,
