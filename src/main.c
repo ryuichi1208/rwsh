@@ -48,6 +48,9 @@ int main (int argc, char **argv){
 			exit(0);
 		} else if (!strcmp(cmd, "debag\n")) {
 			fprintf(stdout, "debag");
+		} else if (!strcmp(cmd, "cd\n")) {
+			fprintf(stdout, "chdir!\n");
+			_chdir(cmd);
 		} else {
 			system(cmd);
 		}

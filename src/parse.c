@@ -1,7 +1,14 @@
 #include "main.h"
 
-char* get_line(char *s, int size, char *usr_name) {
-	fprintf(stdout, "%s", SHELL);
+char* get_line(char *s, int size) {
+	char path[MAXPATHLEN];
+
+	if(!getcwd(path, sizeof(path))) {
+		perror("getcwd failed");
+		return "exit";
+	}
+
+	fprintf(stdout, "%s %s$ ", SHELL, path);
 
 	while(fgets(s, size, stdin) == NULL) {
 		if(errno == EINTR)
