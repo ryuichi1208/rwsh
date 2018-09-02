@@ -18,14 +18,15 @@ typedef unsigned int u_int;
 typedef unsigned long u_long;
 
 /* 定数　*/
+#define MAXPATHLEN	256
 #define MAX_CMD_STRLEN 	256
-#define MIN_CMD_STRLEN 	3
-#define SHELL	"rwsh$ "
+#define MIN_CMD_STRLEN	3
+#define SHELL		"rwsh :"
 
 /* 関数プロトタイプ */
 int 	signal_handler_control(int);
 void 	sig_handler(int);
-char*	get_line(char*, int, char*);
+char*	get_line(char*, int);
 
 typedef enum _job_mode {
 	FOREGROUND,
