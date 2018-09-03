@@ -1,4 +1,5 @@
 #include "main.h"
+#include "util.h"
 
 int _chdir(char *dir) {
 
@@ -16,6 +17,11 @@ int _open(char *filepath) {
 	return 0;
 }
 
+void string_set(string_t *str, size_t pos, char c){
+	str->data[pos] = c;
+}
+
+
 size_t get_filesize(FILE *fp){
 	fseek(fp, 0L, SEEK_END);
 	size_t size = ftell(fp);
@@ -23,6 +29,15 @@ size_t get_filesize(FILE *fp){
 	return size;
 }
 
+string_t* string_new(size_t size){
+	string_t *str = (string_t*)malloc(sizeof(string_t));
+	str->size = size;
+	str->data = (char*)malloc(size);
+	if(str->data == NULL) error("malloc failed: size=%u", size);
+	return str;
+}
+
+/* ファイル読み込み関数 */
 string_t* read_file(FILE *fp){
 	int c;
 	size_t i = 0;
