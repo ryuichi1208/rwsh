@@ -24,9 +24,9 @@ typedef unsigned long u_long;
 #define SHELL		"rwsh :"
 
 /* 関数プロトタイプ */
-int 	signal_handler_control(int);
-void 	sig_handler(int);
-char*	get_line(char*, int);
+extern int 	signal_handler_control(int);
+extern void 	sig_handler(int);
+extern char*	get_line(char*, int);
 
 typedef enum _job_mode {
 	FOREGROUND,
