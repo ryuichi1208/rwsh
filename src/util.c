@@ -1,6 +1,12 @@
 #include "main.h"
 #include "util.h"
 
+#ifdef DEBUG
+#define dprintf(x...)	printf(x)
+#else
+#define dprintf(x...)
+#endif
+
 int _chdir(char *dir) {
 
 	dir = "../";
