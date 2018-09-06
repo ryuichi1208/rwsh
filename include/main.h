@@ -24,11 +24,16 @@ typedef unsigned long u_long;
 #define MIN_CMD_STRLEN	3
 #define MAX_TOKEN_LEN 	64
 #define MAX_INPUT_SIZE 	8192
+#define BLOCK_SIZ	4096
+#define BLOCK_NUM	64
 
 /* 関数プロトタイプ */
 extern int 	signal_handler_control(int);
 extern void 	sig_handler(int);
 extern char*	get_line(char*, int);
+extern void 	init_IRQ(void);
+extern void 	fork_init(void);
+extern void 	radix_tree_init(void);
 
 typedef enum _job_mode {
 	FOREGROUND,

@@ -33,7 +33,8 @@ string_t* string_new(size_t size){
 	string_t *str = (string_t*)malloc(sizeof(string_t));
 	str->size = size;
 	str->data = (char*)malloc(size);
-	if(str->data == NULL) error("malloc failed: size=%u", size);
+	if(str->data == NULL) 
+		fprintf(stderr, "malloc failed: size=%u", size);
 	return str;
 }
 

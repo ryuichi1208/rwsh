@@ -1,1 +1,1 @@
-make -c src
+make -C src
