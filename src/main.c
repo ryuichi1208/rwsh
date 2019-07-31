@@ -12,7 +12,6 @@ void usage() {
 /* オプション解析用関数 */
 void parse_opt(int argc, char **argv) {
 	int opt;
-	
 	while ((opt = getopt(argc, argv, "v:")) != -1) {
 		switch (opt) {
 			case 'v':
@@ -49,7 +48,6 @@ int main (int argc, char **argv){
 		} else if (!strcmp(cmd, "debag\n")) {
 			fprintf(stdout, "debag");
 		} else if (!strcmp(cmd, "cd\n")) {
-			fprintf(stdout, "chdir!\n");
 			_chdir(cmd);
 		} else {
 			system(cmd);
