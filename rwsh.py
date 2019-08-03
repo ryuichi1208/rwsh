@@ -1,15 +1,35 @@
+"""
+/*
+ *
+ * This software may be freely redistributed under the terms of the
+ * GNU General Public License.
+ *
+ * Written by ryuichi1208 (ryucrosskey@gmail.com)
+ *
+ */
+"""
+
+
 import os
 import sys
 import math
 import signal
 import getpass
 import numpy as np
-import subprocess
 import colorama
+import textwrap
+import uptime
+import platform as pf
+
+from datetime import datetime
+from subprocess import call, run, PIPE
 from colorama import Fore, Back, Style
 from threading import Timer
 
 class Color:
+    """
+    Define color when displaying to prompt
+    """
     BLACK     = '\033[30m'
     RED       = '\033[31m'
     GREEN     = '\033[32m'
@@ -25,9 +45,38 @@ class Color:
     REVERCE   = '\033[07m'
 
 def handler(num, frame):
-    print("\nlogout...")
+    print(Color.GREEN, "\nlogout...")
     sys.exit()
 
+
+def debug_info(num, frame):
+    proc_info = '''
+    ===== DEBUG INFO =====
+     DATE   : {}
+     UPTIME : {}
+     OS     : {}
+     CPU    : {}
+     BIT    : {}
+     PID    : {}
+     PPID   : {}
+     USER   : {}
+     Python : {}
+     ======================
+    '''.format(
+                datetime.now().strftime("%Y/%m/%d %H:%M:%S"), \
+                uptime.boottime(), \
+                pf.system(), \
+                pf.processor(), \
+                str(64 if sys.maxsize > 2**32 else 32) + " bit", \
+                os.getpid(), \
+                os.getppid(), \
+                os.environ.get("USER"), \
+                str(sys.version_info.major) + "."  + str(sys.version_info.minor)
+              )
+
+    print(Color.BLUE, "\n", textwrap.dedent(proc_info).strip())
+    print(Color.END)
+    return
 
 def stat_dir(dirpath):
     try:
@@ -59,14 +108,33 @@ def do_exec_cd(dirpath):
     return
 
 
+def do_exec_vim(filepath):
+    """
+    Called when running vim.
+    Since not implemented, EDITOR assumes neovim
+    """
+    call(["nvim", filepath])
+    return
+
+
 def do_exec_cmd(cmd):
+    """
+    Dispatch function for command execution
+    Separate function calls for each command you call
+
+    Basically, only Linux commands are accepted
+    """
     if cmd[0] == "cd":
         do_exec_cd(cmd[1:])
+        return run("echo", stdout=PIPE)
+    if cmd[0] in ["vim", "vi"]:
+        do_exec_vim(cmd[1] if len(cmd) > 1 else None)
+        return run("echo", stdout=PIPE)
     if cmd[0] == "ls" and len(cmd) > 1 and cmd[1] == "-z":
         do_exec_ls_z()
     else:
         try:
-            res = subprocess.run(cmd, stdout=subprocess.PIPE)
+            res = run(cmd, stdout=PIPE)
             sys.stdout.buffer.write(res.stdout)
         except FileNotFoundError:
             print(f'command not found: {cmd[0]}')
@@ -76,14 +144,25 @@ def do_exec_cmd(cmd):
 
 
 def generate_prompt():
+    """
+    Generate a prompt to display
+    """
     hostname = os.uname()[1]
     username = getpass.getuser()
+
     return f'{hostname}@{username} '
 
 
 def main():
     prompt = generate_prompt()
+
+    # Pictograph when end status is 0
     state = "🤗"
+
+    """
+    Receive command input in loop processing
+    Send signal SIGINT to exit
+    """
     while True:
         try :
             cmd = input(f'{prompt}{state} ').split()
@@ -102,4 +181,5 @@ def main():
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, handler)
+    signal.signal(signal.SIGUSR1, debug_info)
     main()
