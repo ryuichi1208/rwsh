@@ -9,7 +9,6 @@
  */
 """
 
-
 import os
 import sys
 import math
@@ -20,6 +19,7 @@ import colorama
 import textwrap
 import uptime
 import platform as pf
+import readline
 
 from datetime import datetime
 from subprocess import call, run, PIPE
@@ -43,6 +43,45 @@ class Color:
     UNDERLINE = '\033[4m'
     INVISIBLE = '\033[08m'
     REVERCE   = '\033[07m'
+
+
+class Logger:
+    """
+    Class that holds format and log level for log output
+    Return an instance of the log to the source
+    """
+    def __init__(self, name=__name__):
+        self.logger = getLogger(name)
+        self.logger.setLevel(DEBUG)
+        formatter = Formatter("[%(asctime)s] [%(process)d] [%(name)s] [%(levelname)s] %(message)s")
+
+        handler = StreamHandler()
+        handler.setLevel(DEBUG)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
+        handler = handlers.RotatingFileHandler(filename = 'your_log_path.log',
+                                               maxBytes = 1048576,
+                                               backupCount = 3)
+        handler.setLevel(DEBUG)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
+    def debug(self, msg):
+        self.logger.debug(msg)
+
+    def info(self, msg):
+        self.logger.info(msg)
+
+    def warn(self, msg):
+        self.logger.warning(msg)
+
+    def error(self, msg):
+        self.logger.error(msg)
+
+    def critical(self, msg):
+        self.logger.critical(msg)
+
 
 def handler(num, frame):
     print(Color.GREEN, "\nlogout...")
@@ -153,6 +192,38 @@ def generate_prompt():
     return f'{hostname}@{username} '
 
 
+def signal_set():
+    """
+    Run some of the cleanups that should be performed when
+    we run signal from a builtin command context.
+    I might want to also call reset parser here.
+    """
+    signal.signal(signal.SIGINT, handler)
+    signal.signal(signal.SIGUSR1, debug_info)
+
+
+def completer(text, state):
+    """
+    Function called by tab completion.
+    In the current implementation,
+    only the directory can be completed
+    """
+    dir_list = os.listdir(path='.')
+    options = [x for x in dir_list if x.startswith(text)]
+    try:
+        return options[state]
+    except IndexError:
+        return None
+
+def init_completion():
+    """
+    Set up and initialize functions to be called
+    by tab completion interactively
+    """
+    readline.set_completer(completer)
+    readline.parse_and_bind("tab: complete")
+
+
 def main():
     prompt = generate_prompt()
 
@@ -180,6 +251,11 @@ def main():
 
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, handler)
-    signal.signal(signal.SIGUSR1, debug_info)
+    # Initialization of tab completion
+    init_completion()
+
+    # Initialize the signal to be handled
+    signal_set()
+
+    # Transfer execution to interactive processing
     main()
