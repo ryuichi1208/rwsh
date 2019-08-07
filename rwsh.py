@@ -176,6 +176,9 @@ def do_exec_cmd(cmd):
             res = run(cmd, stdout=PIPE)
             sys.stdout.buffer.write(res.stdout)
         except FileNotFoundError:
+            if stat_dir(cmd[0]) == 0:
+                do_exec_cd([cmd[0]])
+                return run("echo", stdout=PIPE)
             print(f'command not found: {cmd[0]}')
         except PermissionError:
             print(f'permission denied: {cmd[0]}')
