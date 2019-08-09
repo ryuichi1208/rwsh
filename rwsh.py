@@ -139,12 +139,16 @@ def do_exec_ls_z():
 def do_exec_cd(dirpath):
     if len(dirpath) == 0:
         dirpath.append(os.environ["HOME"])
+        return os.environ["HOME"]
     if stat_dir(dirpath[0]) == 0:
         try:
             os.chdir(str(dirpath[0]))
         except NotADirectoryError:
             print("Not directory")
-    return
+            return 1
+    else:
+        return 1
+    return 0
 
 
 def do_exec_vim(filepath):
