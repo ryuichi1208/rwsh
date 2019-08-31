@@ -31,3 +31,5 @@ $ python3 rwsh.py
 ## Authors
 
 * [ryuichi1208](https://github.com/ryuichi1208)
+
+## Mit
