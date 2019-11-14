@@ -7,6 +7,20 @@
 #define dprintf(x...)
 #endif
 
+int mat_pipe(int argc, char **argv)
+{
+    char *argv[] = {"ls", "|", "head" , "|", "wc", NULL};
+    int i, pipe_locate[10], pipe_count = 0;
+    pipe_locate[0] = -1;
+    for (i = 0; argv[i] != NULL; i++) {
+        if (strcmp(argv[i], "|") == 0) {
+            pipe_count++;
+            pipe_locate[pipe_count] = i;
+            argv[i] = NULL;
+        }
+    }
+}
+
 int _chdir(char *dir) {
 
 	dir = "../";
