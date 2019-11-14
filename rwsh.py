@@ -20,29 +20,65 @@ import textwrap
 import uptime
 import platform as pf
 import readline
+import pwd
+import grp
+import typing
+import multiprocessing
+import time
+import json
+import pickle
 
 from datetime import datetime
 from subprocess import call, run, PIPE
 from colorama import Fore, Back, Style
 from threading import Timer
 
+
+class Speaker:
+    def __init__(self, root: str):
+        self.root = root
+        self.name = root.name
+        self.utterances = None
+        self.utterance_cycler = None
+
+
+"""
+colormap = np.array([
+    [76, 255, 0],
+    [0, 127, 70],
+    [255, 0, 0],
+    [255, 217, 38],
+    [0, 135, 255],
+    [165, 0, 165],
+    [255, 167, 255],
+    [0, 255, 255],
+    [255, 96, 38],
+    [142, 76, 0],
+    [33, 0, 127],
+    [0, 0, 0],
+    [183, 183, 183],
+], dtype=np.float) / 255
+"""
+
+
 class Color:
     """
     Define color when displaying to prompt
     """
-    BLACK     = '\033[30m'
-    RED       = '\033[31m'
-    GREEN     = '\033[32m'
-    YELLOW    = '\033[33m'
-    BLUE      = '\033[34m'
-    PURPLE    = '\033[35m'
-    CYAN      = '\033[36m'
-    WHITE     = '\033[37m'
-    END       = '\033[0m'
-    BOLD      = '\038[1m'
-    UNDERLINE = '\033[4m'
-    INVISIBLE = '\033[08m'
-    REVERCE   = '\033[07m'
+
+    BLACK = "\033[30m"
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    BLUE = "\033[34m"
+    PURPLE = "\033[35m"
+    CYAN = "\033[36m"
+    WHITE = "\033[37m"
+    END = "\033[0m"
+    BOLD = "\038[1m"
+    UNDERLINE = "\033[4m"
+    INVISIBLE = "\033[08m"
+    REVERCE = "\033[07m"
 
 
 class Logger:
@@ -50,19 +86,22 @@ class Logger:
     Class that holds format and log level for log output
     Return an instance of the log to the source
     """
+
     def __init__(self, name=__name__):
         self.logger = getLogger(name)
         self.logger.setLevel(DEBUG)
-        formatter = Formatter("[%(asctime)s] [%(process)d] [%(name)s] [%(levelname)s] %(message)s")
+        formatter = Formatter(
+            "[%(asctime)s] [%(process)d] [%(name)s] [%(levelname)s] %(message)s"
+        )
 
         handler = StreamHandler()
         handler.setLevel(DEBUG)
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
-        handler = handlers.RotatingFileHandler(filename = 'your_log_path.log',
-                                               maxBytes = 1048576,
-                                               backupCount = 3)
+        handler = handlers.RotatingFileHandler(
+            filename="your_log_path.log", maxBytes=1048576, backupCount=3
+        )
         handler.setLevel(DEBUG)
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
@@ -83,13 +122,31 @@ class Logger:
         self.logger.critical(msg)
 
 
+class Utterance:
+    def __init__(self, frames_fpath, wave_fpath):
+        self.frames_fpath = frames_fpath
+        self.wave_fpath = wave_fpath
+
+    def get_frames(self):
+        return np.load(self.frames_fpath)
+
+    def random_partial(self, n_frames):
+        frames = self.get_frames()
+        if frames.shape[0] == n_frames:
+            start = 0
+        else:
+            start = np.random.randint(0, frames.shape[0] - n_frames)
+        end = start + n_frames
+        return frames[start:end], (start, end)
+
+
 def handler(num, frame):
     print(Color.GREEN, "\nlogout...")
     sys.exit()
 
 
 def debug_info(num, frame):
-    proc_info = '''
+    proc_info = """
     ===== DEBUG INFO =====
      DATE   : {}
      UPTIME : {}
@@ -101,21 +158,56 @@ def debug_info(num, frame):
      USER   : {}
      Python : {}
      ======================
-    '''.format(
-                datetime.now().strftime("%Y/%m/%d %H:%M:%S"), \
-                uptime.boottime(), \
-                pf.system(), \
-                pf.processor(), \
-                str(64 if sys.maxsize > 2**32 else 32) + " bit", \
-                os.getpid(), \
-                os.getppid(), \
-                os.environ.get("USER"), \
-                str(sys.version_info.major) + "."  + str(sys.version_info.minor)
-              )
+    """.format(
+        datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
+        uptime.boottime(),
+        pf.system(),
+        pf.processor(),
+        str(64 if sys.maxsize > 2 ** 32 else 32) + " bit",
+        os.getpid(),
+        os.getppid(),
+        os.environ.get("USER"),
+        str(sys.version_info.major) + "." + str(sys.version_info.minor),
+    )
 
     print(Color.BLUE, "\n", textwrap.dedent(proc_info).strip())
     print(Color.END)
     return
+
+
+def get_stat_dir_info(dirname: str) -> str:
+    os_stat = os.stat(dirname)
+    return {
+        "PID": os.getpid(),
+        "DIR_NAME": dirname,
+        "ST_MODE": os_stat.st_mode,
+        "ST_INO": os_stat.st_ino,
+        "ST_DEV": os_stat.st_dev,
+        "ST_NLINK": os_stat.st_nlink,
+        "ST_UID": f"{os_stat.st_uid}/{pwd.getpwuid(os_stat.st_uid)[0]}",
+        "ST_GID": f"{os_stat.st_gid}/{grp.getgrgid(os_stat.st_gid)[0]}",
+        "ST_ATIME": os_stat.st_atime,
+        "ST_MTIME": os_stat.st_mtime,
+        "ST_CTIME": os_stat.st_ctime,
+    }
+
+
+def multi_proc_lookup_dir(cores: typing.Union[int, None] = 0, find_path: str = "."):
+
+    if not os.path.exists(find_path):
+        return "No such file or directory"
+
+    n_cores = cores if cores else multiprocessing.cpu_count()
+    proc_pool = multiprocessing.Pool(n_cores)
+
+    dir_list = [
+        f
+        for f in os.listdir(path=find_path)
+        if os.path.isdir(os.path.join(find_path, f))
+    ]
+    res = proc_pool.map(get_stat_dir_info, dir_list)
+    print(json.dumps(res))
+
 
 def stat_dir(dirpath):
     try:
@@ -128,7 +220,7 @@ def stat_dir(dirpath):
 
 def do_exec_ls_z():
     cmd = "ls"
-    directory = os.listdir('.')
+    directory = os.listdir(".")
     for file in directory:
         if os.path.isdir(file):
             print(Color.RED + file + Color.END)
@@ -183,9 +275,9 @@ def do_exec_cmd(cmd):
             if stat_dir(cmd[0]) == 0:
                 do_exec_cd([cmd[0]])
                 return run("echo", stdout=PIPE)
-            print(f'command not found: {cmd[0]}')
+            print(f"command not found: {cmd[0]}")
         except PermissionError:
-            print(f'permission denied: {cmd[0]}')
+            print(f"permission denied: {cmd[0]}")
     return res
 
 
@@ -196,7 +288,7 @@ def generate_prompt():
     hostname = os.uname()[1]
     username = getpass.getuser()
 
-    return f'{hostname}@{username} '
+    return f"{hostname}@{username} "
 
 
 def signal_set():
@@ -215,12 +307,13 @@ def completer(text, state):
     In the current implementation,
     only the directory can be completed
     """
-    dir_list = os.listdir(path='.')
+    dir_list = os.listdir(path=".")
     options = [x for x in dir_list if x.startswith(text)]
     try:
         return options[state]
     except IndexError:
         return None
+
 
 def init_completion():
     """
@@ -242,8 +335,8 @@ def main():
     Send signal SIGINT to exit
     """
     while True:
-        try :
-            cmd = input(f'{prompt}{state} ').split()
+        try:
+            cmd = input(f"{prompt}{state} ").split()
             if len(cmd) == 0:
                 continue
             if do_exec_cmd(cmd).returncode != 0:
@@ -257,7 +350,7 @@ def main():
             continue
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Initialization of tab completion
     init_completion()
 
@@ -266,3 +359,42 @@ if __name__ == '__main__':
 
     # Transfer execution to interactive processing
     main()
+
+"""
+def normalize_volume(wav, target_dBFS, increase_only=False, decrease_only=False):
+    if increase_only and decrease_only:
+        raise ValueError("Both increase only and decrease only are set")
+    dBFS_change = target_dBFS - 10 * np.log10(np.mean(wav ** 2))
+    if (dBFS_change < 0 and increase_only) or (dBFS_change > 0 and decrease_only):
+        return wav
+    return wav * (10 ** (dBFS_change / 20))
+"""
+
+
+def move_all_files(src_dir_path, dst_dir_path):
+    paths = get_file_paths(src_dir_path)
+    for p in paths:
+        p = Path(p)
+        p.rename(Path(dst_dir_path) / p.name)
+
+
+def delete_all_files(dir_path):
+    paths = get_file_paths(dir_path)
+    for p in paths:
+        p = Path(p)
+        p.unlink()
+
+
+class ls_colors_mu_class(Chunk):
+    COLOR_TYPE_GRAY = 0
+    COLOR_TYPE_RGB = 2
+    COLOR_TYPE_PLTE = 3
+    COLOR_TYPE_GRAYA = 4
+    COLOR_TYPE_RGBA = 6
+    color_types = {
+        COLOR_TYPE_GRAY: ("Grayscale", (1, 2, 4, 8, 16)),
+        COLOR_TYPE_RGB: ("RGB", (8, 16)),
+        COLOR_TYPE_PLTE: ("Palette", (1, 2, 4, 8)),
+        COLOR_TYPE_GRAYA: ("Greyscale+Alpha", (8, 16)),
+        COLOR_TYPE_RGBA: ("RGBA", (8, 16)),
+    }
