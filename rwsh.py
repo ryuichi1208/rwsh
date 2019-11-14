@@ -144,14 +144,15 @@ def handler(num, frame):
     print(Color.GREEN, "\nlogout...")
     sys.exit()
 
-    
-def action(methods=list(['get']), detail=False):
+
+def action(methods=list(["get"]), detail=False):
     methods = [method.lower() for method in methods]
 
     def decorator(func):
         func.bind_to_methods = methods
         func.detail = detail
         return func
+
     return decorator
 
 
@@ -237,22 +238,23 @@ def do_exec_ls_z():
             continue
         print(file)
 
+
 def _is_whitespace(char):
-  if char == " " or char == "\t" or char == "\n" or char == "\r":
-    return True
-  cat = unicodedata.category(char)
-  if cat == "Zs":
-    return True
-  return False
+    if char == " " or char == "\t" or char == "\n" or char == "\r":
+        return True
+    cat = unicodedata.category(char)
+    if cat == "Zs":
+        return True
+    return False
 
 
 def _is_control(char):
-  if char == "\t" or char == "\n" or char == "\r":
+    if char == "\t" or char == "\n" or char == "\r":
+        return False
+    cat = unicodedata.category(char)
+    if cat in ("Cc", "Cf"):
+        return True
     return False
-  cat = unicodedata.category(char)
-  if cat in ("Cc", "Cf"):
-    return True
-  return False
 
 
 def do_exec_cd(dirpath):
@@ -312,12 +314,10 @@ def get_random_string(length, allowed_chars="", salt=""):
     if not using_sysrandom:
         random.seed(
             hashlib.sha256(
-                ("%s%s%s" % (
-                    random.getstate(),
-                    time.time(),
-                    salt)).encode('utf-8')
-            ).digest())
-    return ''.join(random.choice(allowed_chars) for i in range(length))
+                ("%s%s%s" % (random.getstate(), time.time(), salt)).encode("utf-8")
+            ).digest()
+        )
+    return "".join(random.choice(allowed_chars) for i in range(length))
 
 
 def generate_prompt():
