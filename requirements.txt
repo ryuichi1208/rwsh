@@ -27,7 +27,7 @@ importlib-metadata==0.17
 incremental==17.5.0
 itsdangerous==1.1.0
 jedi==0.14.1
-Jinja2==2.10.1
+Jinja2==2.11.3
 kiwisolver==1.1.0
 lxml==4.3.3
 MarkupSafe==1.1.1
